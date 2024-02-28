@@ -1,4 +1,5 @@
 from flask import Flask, request, jsonify
+import vosk
 
 app = Flask(__name__)
 
@@ -9,9 +10,27 @@ users = {
 
 auth_code = 123456
 
+vosk_model_path = "models/vosk-model"
+vosk_model = vosk.Model(vosk_model_path)
+recognizer = vosk.KaldiRecognizer(vosk_model, 16000)
+
 @app.route('/greet', methods=['POST'])
 def greet_user():
     return jsonify({"message": "Welcome to Banking Chatbot! How can I assist you today?"})
+
+@app.route('/speech_to_text', methods=['POST'])
+def speech_to_text():
+    # Receive audio input from user
+    audio_data = request.data
+    
+    # Convert speech to text using Vosk
+    if recognizer.AcceptWaveform(audio_data):
+        result = recognizer.Result()
+        text = result['text']
+    else:
+        text = "Recognition failed"
+    
+    return jsonify({'text': text})
 
 @app.route('/get_user', methods=['POST'])
 def get_user():
